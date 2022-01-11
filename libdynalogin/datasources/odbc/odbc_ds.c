@@ -113,30 +113,22 @@ void extract_error(
 }
 
 apr_status_t odbc_get_string(char **s, SQLHSTMT stmt,
-		SQLUSMALLINT col, apr_pool_t *pool)
+                    SQLUSMALLINT col, apr_pool_t *pool)
 {
-	SQLRETURN ret;
-	SQLLEN len;
-
-	*s = NULL;
-
-	ret = SQLGetData(stmt, col, SQL_C_CHAR, NULL, 0, &len);
-	if(!SQL_SUCCEEDED(ret))
-		return APR_EGENERAL;
+        SQLRETURN ret;
+        SQLLEN len;
+        if((*s = apr_pcalloc(pool, 128)) == NULL)
+                return APR_EGENERAL;
+ 
+        ret = SQLGetData(stmt, col, SQL_C_CHAR, *s, 128, &len);
+        if(!SQL_SUCCEEDED(ret))
+                return APR_EGENERAL;
 
 	if (len == SQL_NULL_DATA)
-		return APR_SUCCESS;
+                return APR_SUCCESS;
 
-	if((*s = apr_pcalloc(pool, len + 1)) == NULL)
-		return APR_EGENERAL;
-
-	ret = SQLGetData(stmt, col, SQL_C_CHAR,
-			*s, len + 1, &len);
-	if(!SQL_SUCCEEDED(ret))
-		return APR_EGENERAL;
-
-	return APR_SUCCESS;
-}
+        return APR_SUCCESS;
+    }
 
 apr_status_t odbc_set_string(char *s, SQLHSTMT stmt, SQLUSMALLINT col,
 		SQLLEN *indicator)
